@@ -39,7 +39,8 @@ class newFeatFile:
         run_feat_files()       : Run flameo OLS in outputdir. Feat files, filtered_func_data, 
                                  and mask image must already exist.
         make_files_and_run()   : Create all feat files, filtered_func_data, and mask in 'outputdir',
-                                 and run flameo OLS. Results saved in 'results' subfolder of 'outputdir'
+                                 run flameo OLS, easythresh zstats, and make webpage to review
+                                 thresholded zstats. All content saved in 'outputdir'.
 
     Utility Functions:
         mk_outputdir()         : Check for outputdir, and create if it does not exist
@@ -49,6 +50,10 @@ class newFeatFile:
         mk_summary()           : Create string representations of con, mat, grp files and save in object
         cp_mask_file()         : Copy mask file into 'outputdir'. If no file is specified in 'mask_image',
                                  fsl's MNI152_T1_brain_mask will be used.
+        thresh_zstats()        : Apply easythresh to zstat images in outputdir/results/ using 'zthresh'
+                                 and 'pthresh' values.
+        mk_webpage_for_zstats(): Create simple webpage for thresholded zstats. Assumes zstats already 
+                                 created and easythresh applied. 
 
     Example:
         ffm = FeatFileMaker(
@@ -104,7 +109,7 @@ class newFeatFile:
                 """FSLDIR environment variable not set.
                 Is FSL installed and configured correctly?"""
             )
-        elif not os.path.exists(FSLDIR):
+        if not os.path.exists(FSLDIR):
             raise Exception(
                 """FSLDIR not found at: {}.
                 Is FSL installed and configured correctly?""".format(
@@ -440,7 +445,7 @@ class newFeatFile:
                 print(cmdstr)
                 os.system(cmdstr)
 
-    def webpage_for_thresh_zstats(self):
+    def mk_webpage_for_thresh_zstats(self):
         import glob
         from dominate import document
         from dominate.tags import h1, img, div, p, b
@@ -470,7 +475,7 @@ class newFeatFile:
 #      run the full pipeline, etc.?)
 # def main():
 #     #If called from script, run with provided variables
-#     self.make_files_and_run()
+#     self.make_files_and_run_from_scratch()
 
 # if __name__ == "__main__":
 #     #if called as a script
