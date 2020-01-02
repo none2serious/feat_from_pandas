@@ -2,10 +2,11 @@ import numpy as np
 import os
 import pandas as pd
 
+
 class newFeatFile:
     """Routines to create feat files (e.g. for use in flameo) from pandas dataframes.
 
-    Parameters/properties: 
+    Parameters/properties:
         columns   (list; req)  : List of columns from which to create feat files
         data      (list; req)  : Pandas dataframe from which to pull columns of data
         basename  (str;  opt)  : Stem for named feat .mat .con and .grp files.
@@ -39,7 +40,7 @@ class newFeatFile:
                                  and mask image must already exist.
         make_files_and_run()   : Create all feat files, filtered_func_data, and mask in 'outputdir',
                                  and run flameo OLS. Results saved in 'results' subfolder of 'outputdir'
-                                  
+
     Utility Functions:
         mk_outputdir()         : Check for outputdir, and create if it does not exist
         mk_designcon()         : Create con string representation and save in object variable
@@ -48,7 +49,7 @@ class newFeatFile:
         mk_summary()           : Create string representations of con, mat, grp files and save in object
         cp_mask_file()         : Copy mask file into 'outputdir'. If no file is specified in 'mask_image',
                                  fsl's MNI152_T1_brain_mask will be used.
-        
+
     Example:
         ffm = FeatFileMaker(
                             cytokine_cols,
@@ -58,7 +59,7 @@ class newFeatFile:
                             round_to = 3,
                             image_col = 'reho_images',
                             mask_image = '/projects/stan/biomarkers/group_mask.nii.gz')
-        
+
         ffm.make_files_and_run()
 
     Note: 
@@ -84,21 +85,21 @@ class newFeatFile:
         ffill=False,
         image_col="",
         mask_image=None,
-        zthresh = 2.33,
-        pthresh = 0.05,
-        two_sided = True,
-        bg_image = None,
-        results_dir="results"
+        zthresh=2.33,
+        pthresh=0.05,
+        two_sided=True,
+        bg_image=None,
+        results_dir="results",
     ):
         # Check variable type for required arguments
         if not isinstance(columns, list):
             raise Exception("'columns' must be a list")
         if not isinstance(data, pd.DataFrame):
             raise Exception("'data' must be a Pandas DataFrame")
-        
-        #Check that FSL is installed and configured. Will need flameo, fslmerge, etc...
+
+        # Check that FSL is installed and configured.
         FSLDIR = os.getenv("FSLDIR")
-        if FSLDIR == None:
+        if FSLDIR is None:
             raise Exception(
                 """FSLDIR environment variable not set.
                 Is FSL installed and configured correctly?"""
@@ -110,7 +111,7 @@ class newFeatFile:
                     self.fsldir
                 )
             )
-            
+
         self.columns = columns
         self.dataframe = data
         self.basename = basename
@@ -126,21 +127,23 @@ class newFeatFile:
         self.mask_image = mask_image
         self.image_col = image_col
         self.fsldir = FSLDIR
-        self.default_mask = os.path.join(self.fsldir,
-                                        'data/standard/MNI152_T1_2mm_brain_mask.nii.gz')
+        self.default_mask = os.path.join(
+            self.fsldir, "data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
+        )
         self.zthresh = zthresh
         self.pthresh = pthresh
         self.two_sided = two_sided
-        self.results_dir=results_dir
+        self.results_dir = results_dir
         if bg_image is None:
-            self.bg_image = os.path.join(self.fsldir,
-                            'data/standard/MNI152_T1_2mm_brain.nii.gz')
+            self.bg_image = os.path.join(
+                self.fsldir, "data/standard/MNI152_T1_2mm_brain.nii.gz"
+            )
         else:
             self.bg_image = bg_image
 
     def make_filtered_func(self):
         """
-        Merge images specified in 'image_col' to 4D filtered_func_data, and save in 'outputdir'
+        Merge images specified in 'image_col' to 4D filtered_func_data. save in 'outputdir'
         These images will be aligned with the values of interest specified in 'columns'
         """
         if self.image_col == "":
@@ -150,27 +153,31 @@ class newFeatFile:
             a filtered_func_data 4D file can be created."""
             )
         try:
-            cmdstr = "fslmerge -t {}/filtered_func_data ".format(self.outputdir)
+            cmdstr = "fslmerge -t {}/filtered_func_data ".format(
+                self.outputdir)
             for s in self.dataframe[self.image_col]:
                 cmdstr += s + " "
         except:
             raise Exception(
-                "Not able to merge strings from {} \nto {}/filtered_func_data".format(
+                """Not able to merge strings from {}
+                to {}/filtered_func_data""".format(
                     self.image_col, self.outputdir
                 )
             )
 
-        #create/check outputdir if no exception thrown
+        # create/check outputdir if no exception thrown
         self.mk_outputdir()
 
-        print("Merging images to: {}/filtered_func_data".format(self.outputdir))
+        print("""Merging images to:
+            {}/filtered_func_data""".format(self.outputdir))
 
         x = os.system(cmdstr)
 
         if x != 0:
             raise Exception(
-                """An error ({}) occurred while attempting to merge images from dataframe column '{}'
-            to: {}/filtered_func_data""".format(
+                """An error ({}) occurred while attempting to merge images
+                from dataframe column '{}'
+                to: {}/filtered_func_data""".format(
                     x, self.image_col, self.outputdir
                 )
             )
@@ -179,73 +186,75 @@ class newFeatFile:
 
     def mk_summary(self):
         """
-        Return formatted string representation of the current parameters that will be used
+        Return formatted string representation of
+        the current parameters that will be used
         to create feat files and run analyses.
         """
-        
-        self.selfupdate() # make sure that we have the most current representation
+
+        self.selfupdate()
 
         if self.mat is not None:
-            mat_hdr = "\n\t\t  ".join(self.mat.split("\n")[:5]) + "\n\t\t  ...etc"
+            mat_hdr = "\n\t\t  ".join(
+                self.mat.split("\n")[:5]) + "\n\t\t  ...etc"
         else:
             mat_hdr = "Not Created Yet."
 
         if self.grp is not None:
-            grp_hdr = "\n\t\t  ".join(self.grp.split("\n")[:5]) + "\n\t\t  ...etc"
+            grp_hdr = "\n\t\t  ".join(
+                self.grp.split("\n")[:5]) + "\n\t\t  ...etc"
         else:
             grp_hdr = "Not Created Yet."
 
         if self.con is not None:
             n_cols = len(self.columns) + 4
-            con_hdr = "\n\t\t  ".join(self.con.split("\n")[:n_cols]) + "\n\t\t  ...etc"
+            con_hdr = "\n\t\t  ".join(self.con.split(
+                "\n")[:n_cols]) + "\n\t\t  ...etc"
         else:
             con_hdr = "Not Created Yet."
-            
-        #Hate to hard-code these things. Maybe come back to this later and update
-        cols =   "columns         : {}\n".format(self.columns)
-        dat =    "data            : {}\n".format(self.dataframe.columns)
-        base =   "basename        : {}\n".format(self.basename)
-        out =    "outputdir       : {}\n".format(self.outputdir)
-        gv =     "gmv             : {}\n".format(self.gmv)
-        dm =     "demean_matcols  : {}\n".format(self.demean_matcols)
-        dec =    "decimal_places  : {}\n".format(self.decimal_places)
-        fill =   "ffill           : {}\n".format(self.ffill)
-        mat =    "mat             : {}\n".format(mat_hdr)
-        con =    "con             : {}\n".format(con_hdr)
-        grp =    "grp             : {}\n".format(grp_hdr)
-        ffd =    "filt_func_data  : {}\n".format(self.filt_func_data)
-        fsldir = "FSLDIR          : {}\n".format(self.fsldir)
-        mask =   "mask_image      : {}\n".format(self.mask_image)
-        pval =   "pthresh         : {}\n".format(self.pthresh)
-        zstat =  "zthresh         : {}\n".format(self.zthresh)
-        twosided="two_sided       : {}\n".format(self.two_sided)
-        
-        outstr = "Object Values:\n"
-        
-        outstr += cols + dat + base + out + gv + dm + dec + fill 
-        outstr += mat + con + grp + ffd + fsldir + mask + pval + zstat + twosided
-        
-        return(outstr)
 
+        # Hate to hard-code these things.
+        # Maybe come back to this later and update
+        cols = "columns         : {}\n".format(self.columns)
+        dat = "data            : {}\n".format(self.dataframe.columns)
+        base = "basename        : {}\n".format(self.basename)
+        out = "outputdir       : {}\n".format(self.outputdir)
+        gv = "gmv             : {}\n".format(self.gmv)
+        dm = "demean_matcols  : {}\n".format(self.demean_matcols)
+        dec = "decimal_places  : {}\n".format(self.decimal_places)
+        fill = "ffill           : {}\n".format(self.ffill)
+        mat = "mat             : {}\n".format(mat_hdr)
+        con = "con             : {}\n".format(con_hdr)
+        grp = "grp             : {}\n".format(grp_hdr)
+        ffd = "filt_func_data  : {}\n".format(self.filt_func_data)
+        fsldir = "FSLDIR          : {}\n".format(self.fsldir)
+        mask = "mask_image      : {}\n".format(self.mask_image)
+        pval = "pthresh         : {}\n".format(self.pthresh)
+        zstat = "zthresh         : {}\n".format(self.zthresh)
+        twosided = "two_sided       : {}\n".format(self.two_sided)
+
+        outstr = "Object Values:\n"
+
+        outstr += cols + dat + base + out + gv + dm + dec
+        outstr += fill + mat + con + grp + ffd + fsldir
+        outstr += mask + pval + zstat + twosided
+
+        return outstr
 
     def show_parameters(self):
         """
         Print summary of current object parameters.
-        """        
+        """
         print(self.mk_summary())
-
 
     def save_paramaters(self):
         """
-        Write summary of current object parameters to 'outputdir'. Will create 
-        outputdir if it does not exist.
+        Write summary of current object parameters to 'outputdir'.
+        Will create outputdir if it does not exist.
         """
-        self.mk_outputdir() #check that we have a directory to write in
-        f = open(os.path.join(self.outputdir, "featfile_params.txt"),'w')
-        f.write(self.mk_summary())
-        f.close()
-        
-    
+        self.mk_outputdir()  # check that we have a directory to write in
+        with open(os.path.join(self.outputdir, "featfile_params.txt"), "w") as f:
+            f.write(self.mk_summary())
+
     def write_feats(self):
         """
         Write feat mat, con and grp files to 'outputdir'
@@ -255,25 +264,21 @@ class newFeatFile:
         self.mk_outputdir()
         self.selfupdate()
 
-        f = open(os.path.join(self.outputdir, "{}.mat".format(self.basename)), "w")
-        f.write(self.mat)
-        f.close()
+        with open(os.path.join(self.outputdir, "{}.mat".format(self.basename)), "w") as f:
+            f.write(self.mat)
 
-        f = open(os.path.join(self.outputdir, "{}.con".format(self.basename)), "w")
-        f.write(self.con)
-        f.close()
+        with open(os.path.join(self.outputdir, "{}.con".format(self.basename)), "w") as f:
+            f.write(self.con)
 
-        f = open(os.path.join(self.outputdir, "{}.grp".format(self.basename)), "w")
-        f.write(self.grp)
-        f.close()
+        with open(os.path.join(self.outputdir, "{}.grp".format(self.basename)), "w") as f:
+            f.write(self.grp)
 
-        
     def mk_designcon(self):
         """Create design.mat string representation and save in object variable."""
         self.con = ""
         con_tmplt = "ContrastName{}\t{}"
 
-        if self.gmv == True:
+        if self.gmv is True:
             numcols = len(self.columns) + 1
         else:
             numcols = len(self.columns)
@@ -281,8 +286,8 @@ class newFeatFile:
         for k in range(len(self.columns)):
             self.con += con_tmplt.format(k + 1, self.columns[k]) + "\n"
 
-        if self.gmv == True:
-            self.con += con_tmplt.format(k+2, "grand_mean\n")
+        if self.gmv is True:
+            self.con += con_tmplt.format(k + 2, "grand_mean\n")
 
         self.con += "/NumWaves\t{}\n".format(numcols)
         self.con += "/NumContrasts\t{}\n".format(numcols)
@@ -294,7 +299,6 @@ class newFeatFile:
             s = I[k].astype(str)
             self.con += "\t".join(s) + "\n"
 
-            
     def mk_outputdir(self):
         """
         Checks for existence of 'outputdir', and creates folders if they do not already exist.
@@ -302,7 +306,6 @@ class newFeatFile:
         if not os.path.exists(self.outputdir):
             os.makedirs(self.outputdir)
 
-            
     def mk_designgrp(self):
         """Create design.grp string representation and save in object variable"""
 
@@ -313,7 +316,6 @@ class newFeatFile:
         for s in I:
             self.grp += "{}\n".format(s)
 
-            
     def mk_designmat(self):
         """Create design.mat string representation and save in object variable"""
 
@@ -321,25 +323,24 @@ class newFeatFile:
         mat_tmplt = "/NumWaves {0}\n/NumPoints {1}\n/Matrix\n"
         X = self.dataframe[self.columns].copy()
 
-        if self.demean_matcols == True:
+        if self.demean_matcols is True:
             for c in X.columns:
                 X[c] = X[c] - X[c].mean()
 
         X = X.round(self.decimal_places)
 
-        if self.gmv == True:
+        if self.gmv is True:
             X["gmv"] = 1
 
         self.mat = mat_tmplt.format(len(X.columns), len(X))
 
-        if self.ffill == True:
+        if self.ffill is True:
             X.ffill(inplace=True)
 
         for k in range(len(X)):
             vals = X.iloc[k].astype(str)
             self.mat += "\t".join(vals) + "\n"
 
-            
     def cp_mask_file(self):
         """
         Copy mask file to 'outputdir'. If no mask is specified, the default
@@ -354,7 +355,6 @@ class newFeatFile:
         x = os.system(cmd)
         return x
 
-    
     def selfupdate(self):
         """
         Update string representations for mat, con, and grp files, using all current parameters,
@@ -364,7 +364,6 @@ class newFeatFile:
         self.mk_designmat()
         self.mk_designgrp()
 
-        
     def run_feat_files(self):
         """
         Run flameo on feat files and filtered_func_data in 'outputdir'
@@ -375,16 +374,15 @@ class newFeatFile:
         cope = os.path.join(self.outputdir, "filtered_func_data")
         filebase = os.path.join(self.outputdir, self.basename)
         logdir = os.path.join(self.outputdir, self.results_dir)
-        
+
         if os.path.exists(logdir) is True:
-#             os.rename(logdir, logdir+'.old')
+            #             os.rename(logdir, logdir+'.old')
             os.rmdir(resultsdir)
-            
+
         cmdstr = flameo.format(cope, mask, filebase, logdir)
         print(cmdstr)
         x = os.system(cmdstr)
-        return(x)
-
+        return x
 
     def make_files_and_run(self):
         """
@@ -396,39 +394,78 @@ class newFeatFile:
         self.cp_mask_file()
         self.run_feat_files()
         self.thresh_zstats()
+        self.webpage_for_thresh_zstats()
 
-#Usage: easythresh <raw_zstat> <brain_mask> <cluster_z_thresh> <cluster_prob_thresh> <background_image> <output_root> [--mm]
+    # Usage: easythresh <raw_zstat> <brain_mask> <cluster_z_thresh> <cluster_prob_thresh> <background_image> <output_root> [--mm]
     def thresh_zstats(self):
         """
         Apply easythresh to zstats in results dir. 
         """
-        
+
         tmplt = "cd {} ; easythresh {} {} {} {} {} {} --mm"
         mask = os.path.join(self.outputdir, "mask")
-        resultsdir = os.path.join(self.outputdir, 'results')
+        resultsdir = os.path.join(self.outputdir, "results")
 
-        for k in range(len(self.columns)): #using len(self.columns) will prevent GMV from rendering
-            zstat = "zstat{}".format(k+1)
-            cmdstr = tmplt.format(resultsdir, zstat, mask, self.zthresh, self.pthresh, self.bg_image, 'pos_zstat{}'.format(k+1))
+        for k in range(
+            len(self.columns)
+        ):  # using len(self.columns) will prevent GMV from rendering
+            zstat = "zstat{}".format(k + 1)
+            cmdstr = tmplt.format(
+                resultsdir,
+                zstat,
+                mask,
+                self.zthresh,
+                self.pthresh,
+                self.bg_image,
+                "pos_{}_zstat{}".format(self.columns[k], k + 1),
+            )
             print(cmdstr)
             os.system(cmdstr)
             if self.two_sided is True:
-                invstat = 'neg_zstat{}'.format(k+1)
-                cmdstr = "cd {0} ; fslmaths {1} -mul -1 {2}".format(resultsdir, zstat, invstat)
+                invstat = "neg_zstat{}".format(k + 1)
+                cmdstr = "cd {0} ; fslmaths {1} -mul -1 {2}".format(
+                    resultsdir, zstat, invstat
+                )
                 os.system(cmdstr)
                 print(cmdstr)
-                cmdstr = tmplt.format(resultsdir, invstat, mask, self.zthresh, self.pthresh, self.bg_image, 'neg_zstat{}'.format(k+1))
+                cmdstr = tmplt.format(
+                    resultsdir,
+                    invstat,
+                    mask,
+                    self.zthresh,
+                    self.pthresh,
+                    self.bg_image,
+                    "neg_{}_zstat{}".format(self.columns[k], k + 1),
+                )
                 print(cmdstr)
                 os.system(cmdstr)
-                
-    def render_thresh_zstats():
-        return(0)
-    
 
-#TODO: adapt for use as a command-line script
-#      Will need to import argparse, and load 
+    def webpage_for_thresh_zstats(self):
+        import glob
+        from dominate import document
+        from dominate.tags import h1, img, div, p, b
+
+        imgs = glob.glob("{}/results/*.png".format(self.outputdir))
+
+        page_title = "Results: "
+        for c in self.columns:
+            page_title += c + ", "
+
+        with document(title=page_title) as doc:
+            h1(page_title)
+            for path in imgs:
+                txt = path.split("/")[-1]
+                div(p(b(txt)))
+                div(img(src=path), _class="photo")
+
+        with open("{}/results_rendered.html".format(self.outputdir), "w") as f:
+            f.write(doc.render())
+
+
+# TODO: adapt for use as a command-line script
+#      Will need to import argparse, and load
 #      pandas dataframe from string argument.
-#      Probably additional logic to define 
+#      Probably additional logic to define
 #      how far to process (just feat files or
 #      run the full pipeline, etc.?)
 # def main():
