@@ -52,7 +52,7 @@
                                  created and easythresh applied. 
 
     Example:
-        ffm = newFeatFile(
+        ffp = FeatFromPandas(
                             cytokine_cols,
                             dataframe,
                             outputdir='/projects/stan/biomarkers/cytokine_reho',
@@ -61,7 +61,7 @@
                             image_col = 'reho_images',
                             mask_image = '/projects/stan/biomarkers/group_mask.nii.gz')
 
-        ffm.make_files_and_run()
+        ffp.make_files_and_run()
 
     Note: 
         Utility Functions are mostly for internal use. You can/shoud accomplish what you need
@@ -69,6 +69,7 @@
         the analysis, and update the columns and outputdir to leverage the same dataframe in a series of 
         analyses. 
         e.g.
-        ffm.columns=['age','sex','IL6']
-        ffm.outputdir='/projects/stan/biomakers/IL6_reho'
-        ffm.make_files_and_run()
+        ffp.columns=['age','sex','IL6']
+        ffp.outputdir='/projects/stan/biomakers/IL6_reho'
+        ffp.make_files_and_run()
+        
