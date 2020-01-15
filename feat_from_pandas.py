@@ -445,7 +445,7 @@ class FeatFromPandas:
                 print(cmdstr)
                 os.system(cmdstr)
 
-    def mk_webpage_for_thresh_zstats(self):
+    def webpage_for_thresh_zstats(self):
         import glob
         from dominate import document
         from dominate.tags import h1, img, div, p, b
