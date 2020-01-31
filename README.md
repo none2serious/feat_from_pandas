@@ -55,11 +55,11 @@
         ffp = FeatFromPandas(
                             cytokine_cols,
                             dataframe,
-                            outputdir='/projects/stan/biomarkers/cytokine_reho',
+                            outputdir='/projects/biomarkers/cytokine_reho',
                             demean = True,
                             round_to = 3,
                             image_col = 'reho_images',
-                            mask_image = '/projects/stan/biomarkers/group_mask.nii.gz')
+                            mask_image = '/projects/biomarkers/group_mask.nii.gz')
 
         ffp.make_files_and_run()
 
@@ -70,6 +70,6 @@
         analyses. 
         e.g.
         ffp.columns=['age','sex','IL6']
-        ffp.outputdir='/projects/stan/biomakers/IL6_reho'
+        ffp.outputdir='/projects/biomakers/IL6_reho'
         ffp.make_files_and_run()
         
