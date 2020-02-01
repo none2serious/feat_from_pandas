@@ -73,3 +73,4 @@
         ffp.outputdir='/projects/biomakers/IL6_reho'
         ffp.make_files_and_run()
         
+    updated()
